@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Carrito de Flores</title>
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css" integrity="sha384-9gVQ4dYFwwWSjIDZnLEWnxCjeSWFphJiwGPXr1jddIhOegiu1FwO5qRGvFXOdJZ4" crossorigin="anonymous">
+    <style>
+        body {
+            background-color: #f0f8ff;
+            font-family: 'Arial', sans-serif;
+        }
+        .card {
+            border: 2px solid #ff69b4;
+            border-radius: 15px;
+            background-color: #fff0f5;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .card-body {
+            text-align: center;
+            padding: 20px;
+        }
+        .card-title {
+            font-size: 1.5rem;
+            color: #ff1493;
+            font-weight: bold;
+        }
+        .card-text {
+            font-size: 1.2rem;
+            color: #ff6347;
+        }
+        .btn-primary {
+            background-color: #ff1493;
+            border-color: #ff1493;
+        }
+        .btn-primary:hover {
+            background-color: #ff69b4;
+            border-color: #ff69b4;
+        }
+        .btn-danger {
+            background-color: #ff6347;
+            border-color: #ff6347;
+        }
+        .btn-danger:hover {
+            background-color: #ff4500;
+            border-color: #ff4500;
+        }
+        #carrito {
+            background-color: #fff0f5;
+            border-radius: 15px;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+        #total {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        h2 {
+            color: #ff1493;
+        }
+    </style>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Base de datos de productos (flores)
+            const baseDeDatos = [
+                {
+                    id: 1,
+                    nombre: 'Rosa',
+                    precio: 2.5,
+                    imagen: 'images/rosa.jpg'
+                },
+                {
+                    id: 2,
+                    nombre: 'Tulipán',
+                    precio: 3.0,
+                    imagen: 'images/tulipanes.webp'
+                },
+                {
+                    id: 3,
+                    nombre: 'Lirio',
+                    precio: 1.8,
+                    imagen: 'images/Lirio.jpg'
+                },
+                {
+                    id: 4,
+                    nombre: 'Girasol',
+                    precio: 1.2,
+                    imagen: 'images/gira.webp'
+                }
+            ];
+
+            let carrito = [];
+            const divisa = '€';
+            const DOMitems = document.querySelector('#items');
+            const DOMcarrito = document.querySelector('#carrito');
+            const DOMtotal = document.querySelector('#total');
+            const DOMbotonVaciar = document.querySelector('#boton-vaciar');
+
+            // Funciones
+
+            function renderizarProductos() {
+                baseDeDatos.forEach((info) => {
+                    const miNodo = document.createElement('div');
+                    miNodo.classList.add('card', 'col-sm-4');
+                    const miNodoCardBody = document.createElement('div');
+                    miNodoCardBody.classList.add('card-body');
+                    const miNodoTitle = document.createElement('h5');
+                    miNodoTitle.classList.add('card-title');
+                    miNodoTitle.textContent = info.nombre;
+                    const miNodoImagen = document.createElement('img');
+                    miNodoImagen.classList.add('img-fluid');
+                    miNodoImagen.setAttribute('src', info.imagen);
+                    const miNodoPrecio = document.createElement('p');
+                    miNodoPrecio.classList.add('card-text');
+                    miNodoPrecio.textContent = `${info.precio}${divisa}`;
+                    const miNodoBoton = document.createElement('button');
+                    miNodoBoton.classList.add('btn', 'btn-primary');
+                    miNodoBoton.textContent = '+';
+                    miNodoBoton.setAttribute('marcador', info.id);
+                    miNodoBoton.addEventListener('click', anyadirProductoAlCarrito);
+                    miNodoCardBody.appendChild(miNodoImagen);
+                    miNodoCardBody.appendChild(miNodoTitle);
+                    miNodoCardBody.appendChild(miNodoPrecio);
+                    miNodoCardBody.appendChild(miNodoBoton);
+                    miNodo.appendChild(miNodoCardBody);
+                    DOMitems.appendChild(miNodo);
+                });
+            }
+
+            function anyadirProductoAlCarrito(evento) {
+                carrito.push(evento.target.getAttribute('marcador'))
+                renderizarCarrito();
+            }
+
+            function renderizarCarrito() {
+                DOMcarrito.textContent = '';
+                const carritoSinDuplicados = [...new Set(carrito)];
+                carritoSinDuplicados.forEach((item) => {
+                    const miItem = baseDeDatos.filter((itemBaseDatos) => {
+                        return itemBaseDatos.id === parseInt(item);
+                    });
+                    const numeroUnidadesItem = carrito.reduce((total, itemId) => {
+                        return itemId === item ? total += 1 : total;
+                    }, 0);
+                    const miNodo = document.createElement('li');
+                    miNodo.classList.add('list-group-item', 'text-right', 'mx-2');
+                    miNodo.textContent = `${numeroUnidadesItem} x ${miItem[0].nombre} - ${miItem[0].precio}${divisa}`;
+                    const miBoton = document.createElement('button');
+                    miBoton.classList.add('btn', 'btn-danger', 'mx-5');
+                    miBoton.textContent = 'X';
+                    miBoton.style.marginLeft = '1rem';
+                    miBoton.dataset.item = item;
+                    miBoton.addEventListener('click', borrarItemCarrito);
+                    miNodo.appendChild(miBoton);
+                    DOMcarrito.appendChild(miNodo);
+                });
+                DOMtotal.textContent = calcularTotal();
+            }
+
+            function borrarItemCarrito(evento) {
+                const id = evento.target.dataset.item;
+                carrito = carrito.filter((carritoId) => {
+                    return carritoId !== id;
+                });
+                renderizarCarrito();
+            }
+
+            function calcularTotal() {
+                return carrito.reduce((total, item) => {
+                    const miItem = baseDeDatos.filter((itemBaseDatos) => {
+                        return itemBaseDatos.id === parseInt(item);
+                    });
+                    return total + miItem[0].precio;
+                }, 0).toFixed(2);
+            }
+
+            function vaciarCarrito() {
+                carrito = [];
+                renderizarCarrito();
+            }
+
+            DOMbotonVaciar.addEventListener('click', vaciarCarrito);
+
+            renderizarProductos();
+            renderizarCarrito();
+        });
+    </script>
+</head>
+<body>
+    <div class="container">
+        <div class="row">
+            <main id="items" class="col-sm-8 row"></main>
+            <aside class="col-sm-4">
+                <h2>Carrito de Flores</h2>
+                <ul id="carrito" class="list-group"></ul>
+                <hr>
+                <p class="text-right">Total: <span id="total"></span>&euro;</p>
+                <button id="boton-vaciar" class="btn btn-danger">Vaciar</button>
+            </aside>
+        </div>
+    </div>
+</body>
+</html>
